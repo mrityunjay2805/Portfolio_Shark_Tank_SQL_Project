@@ -1,0 +1,123 @@
+select * from sharktank
+
+-- Total episodes
+select count(distinct EpNo ) as Total_episodes from sharktank
+--or
+select max(EpNo) as Total_episodes  from sharktank
+
+-- Total Pitches
+select count(distinct Brand) as Total_pitches from sharktank
+
+-- How many startups got funding
+-- pitches converted into deals
+Select * from sharktank where [Amount Invested lakhs] >0
+
+-- find out count
+select count(brand) from sharktank where [Amount Invested lakhs] >0
+Select count(brand) from sharktank where [Amount Invested lakhs] = 0
+-- or
+
+Select sum(case when [Amount Invested lakhs] >0 then 1 else 0 end) as converted_pitch,
+sum(case when [Amount Invested lakhs] =0 then 1 else 0 end) as not_converted_pitch
+from sharktank
+
+-- Total invested amount
+Select sum([Aman Amount Invested]) as Total_amount_invested from sharktank
+
+--Avg Equity Taken
+select avg([Equity Taken %]) as avg_equity from
+(Select * from sharktank where [Equity Taken %]  > 0 ) as A
+
+--total male participated
+select sum(male) as Male_contestants from sharktank
+
+--total female participated
+select sum(Female) as Female_contestants from sharktank
+
+--Gender Ratio
+select sum(female)/sum(male) as gender_ratio from sharktank
+
+--Highest Amount Invested/Deal
+select max([Amount Invested lakhs]) as max_amount from sharktank
+
+--Highest quity taken
+select max([Equity Taken %]) from sharktank
+
+
+-- pitches that have atleast one femaile contestant
+select count(*) from 
+(select * from sharktank where Female >0) as A
+--or 
+select count(case when female>0 then 1 end) as startups_having_atlease_one_female  from sharktank
+
+
+--pitches converted having atlease one female
+select * from sharktank where Female >0 and [Amount Invested lakhs] >0
+--or
+select * from sharktank where Deal != 'No Deal' and female >0
+
+
+-- Average team members in startup pitches
+select avg([Team members]) from sharktank
+
+
+-- Average amount of investmnet in each deal
+Select avg([Amount Invested lakhs]) as avg_amount_invested from 
+(select * from sharktank where [Amount Invested lakhs] > 0) as A
+--or
+Select avg([Amount Invested lakhs]) as avg_amount_invested from 
+(select * from sharktank where Deal != 'No Deal') as A
+
+
+--Find out the most frequent age group occured in pitces
+select top 1 [Avg age], count([Avg age]) as cnt from sharktank group by [Avg age]
+order by cnt desc
+
+
+-- Most of the startups came from which location
+select location , count(Location) as cnt from sharktank
+group by Location order by cnt desc
+
+
+-- Most famous sector in sharktank
+select Sector , count(Sector) as cnt from sharktank
+group by Sector order by cnt desc
+
+
+-- max times partner in deal
+
+select Partners , count(Partners) as cnt from sharktank where Partners != '-'
+group by Partners
+order by cnt desc
+
+
+--making the matrix (fyi wherever null appears it means that judge was not present in that episode)
+
+Select c.*, d.* from
+
+(
+select a.Shark, a.present_in_total_deals, b.total_deals_done from
+(select 'Ashneer' as Shark,  count(*) as present_in_total_deals from sharktank
+where [Ashneer Amount Invested] is not null) a
+inner join
+(select 'Ashneer' as Shark, count(*) as total_deals_done from sharktank
+where [Ashneer Amount Invested] is not null and [Ashneer Amount Invested] >0 ) b
+on a.Shark = b.Shark
+) as c
+
+inner join
+(
+select 'Ashneer' as Shark, sum([Ashneer Amount Invested]) as Total_amount_Invested,
+avg([Ashneer Equity Taken %]) as avg_equity_taken
+from sharktank where [Ashneer Amount Invested] is not null and [Ashneer Amount Invested] > 0
+) d
+on c.Shark = d.Shark
+
+-- and we can write the same query for other sharks and we can union them to make a matrix
+
+
+-- Highest investment in each sector
+Select * from 
+(select sector, Brand , rank()over(partition by sector order by[Amount Invested lakhs] desc ) as rnk 
+from sharktank ) A
+where rnk =1
